@@ -1,5 +1,5 @@
-#!/bin/bash
-set -e;
+#!/usr/bin/env bash
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
 # Check if name is specified
 if [[ $1 == postgresql:* ]]; then
@@ -231,17 +231,23 @@ case "$1" in
     ;;
 
   help)
-    cat && cat<<EOF
-    postgresql:console <db>                        Open a PostgreSQL console
-    postgresql:create <db>                         Create a PostgreSQL container
-    postgresql:delete <db>                         Delete specified PostgreSQL container
-    postgresql:dump <db> > dump_file.sql           Dump database data
-    postgresql:info <db>                           Display database informations
-    postgresql:link <app> <db>                     Link an app to a PostgreSQL database
-    postgresql:list                                Display list of PostgreSQL containers
-    postgresql:logs <db>                           Display last logs from PostgreSQL container
-    postgresql:restore <db> < dump_file.sql        Restore database data from a previous dump
+    HELP=$(cat<<EOF
+    postgresql:console <db>, Open a PostgreSQL console
+    postgresql:create <db>, Create a PostgreSQL container
+    postgresql:delete <db>, Delete specified PostgreSQL container
+    postgresql:dump <db> > dump_file.sql, Dump database data
+    postgresql:info <db>, Display database informations
+    postgresql:link <app> <db>, Link an app to a PostgreSQL database
+    postgresql:list, Display list of PostgreSQL containers
+    postgresql:logs <db>, Display last logs from PostgreSQL container
+    postgresql:restore <db> < dump_file.sql, Restore database data from a previous dump
 EOF
+)
+    if [[ -n $DOKKU_API_VERSION ]]; then
+      echo "$HELP"
+    else
+      cat && echo "$HELP"
+    fi
     ;;
 
   *)

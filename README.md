@@ -1,26 +1,28 @@
-PostgreSQL plugin for Dokku
----------------------------
+# dokku-pg-plugin [![Build Status](https://img.shields.io/travis/Kloadut/dokku-pg-plugin.svg?branch=master "Build Status")](https://travis-ci.org/Kloadut/dokku-pg-plugin)
 
 Project: https://github.com/progrium/dokku
 
 **Warning: This plugin is under development and still only tested with the below dependencies**
 
-Requirements
-------------
-* Docker version `0.7.2` or higher
-* Dokku version `0.2.1` or higher
+## requirements
 
-Installation
-------------
-```
+- dokku 0.4.0+
+- docker 1.8.x
+
+## installation
+
+```shell
+# on 0.3.x
 cd /var/lib/dokku/plugins
-git clone https://github.com/Kloadut/dokku-pg-plugin postgresql
+git clone https://github.com/Kloadut/dokku-pg-plugin.git postgresql
 dokku plugins-install
+
+# on 0.4.x
+dokku plugin:install https://github.com/Kloadut/dokku-pg-plugin.git postgresql
 ```
 
+## commands
 
-Commands
---------
 ```
 $ dokku help
     postgresql:console <db>                        Open a PostgreSQL console
@@ -34,14 +36,18 @@ $ dokku help
     postgresql:restore <db> < dump_file.sql        Restore database data from a previous dump
 ```
 
-Simple usage
-------------
+## usage
 
 Create a new DB:
-```
-$ dokku postgresql:create foo            # Server side
-$ ssh dokku@server postgresql:create foo # Client side
 
+```shell
+dokku postgresql:create foo            # Server side
+ssh dokku@server postgresql:create foo # Client side
+```
+
+The following will be output:
+
+```
 -----> PostgreSQL container created: postgresql/foo
 
        Host: 172.17.42.1
@@ -52,67 +58,42 @@ $ ssh dokku@server postgresql:create foo # Client side
 ```
 
 Deploy your app with the same name (client side):
-```
-$ git remote add dokku git@server:foo
-$ git push dokku master
 
+```shell
+git remote add dokku git@server:foo
+git push dokku master
 ```
 
-Link your app to the database
-```bash
+Now you can run any of the following commands:
+
+```shell
+# Link your app to the database
 dokku postgresql:link app_name database_name
-```
 
-
-Advanced usage
---------------
-
-Inititalize the database with SQL statements:
-```
+# Inititalize the database with SQL statements
 cat init.sql | dokku postgresql:create foo
-```
 
-Open a PostgreSQL console for specified database:
-```
+# Open a PostgreSQL console for specified database
 dokku postgresql:console foo
-```
 
-Deleting databases:
-```
+# Deleting databases
 dokku postgresql:delete foo
-```
 
-Linking an app to a specific database:
-```
+# Linking an app to a specific database
 dokku postgresql:link foo bar
-```
 
-PostgreSQL logs (per database):
-```
+# PostgreSQL logs (per database)
 dokku postgresql:logs foo
-```
 
-Database information:
-```
+# Database information
 dokku postgresql:info foo
-```
 
-List of containers:
-```
+# List of containers
 dokku postgresql:list
-```
 
-Dump a database:
-```
+# Dump a database
 dokku postgresql:dump foo > foo.sql
-```
 
-Restore a database:
-```
+# Restore a database
 dokku postgresql:restore foo < foo.sql
-```
-
-In case Dokku says `pg_dump not found` when dumping or restoring database: 
-```
-sudo apt-get install postgresql-client-9.3
 ```

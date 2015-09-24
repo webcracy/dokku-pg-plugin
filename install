@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
 # Build docker image
 git clone https://github.com/Kloadut/dokku-pg-dockerfiles /tmp/dokku-pg-dockerfiles
