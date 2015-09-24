@@ -39,7 +39,7 @@ function check_postgresql_tool() {
 }
 
 function get_postgresql_id() {
-    ID=$(docker ps | grep postgresql/"$APP":latest | awk {'print $1'})
+    ID=$(docker ps | grep postgresql/"$APP" | awk {'print $1'})
     echo $ID
 }
 
@@ -103,7 +103,7 @@ case "$1" in
     sleep 4
     # Rename persistent volume
     if [[ ! -f "$DOKKU_ROOT/.postgresql/volume_$APP" ]]; then
-        VOLUME_PATH=$(docker inspect $ID | grep /var/lib/docker/vfs/dir/ | awk '{print $2}' | sed -e's/"//g')
+        VOLUME_PATH=$(docker inspect $ID | grep /var/lib/docker/volumes | awk '{print $2}' | sed -e's/"//g')
         if [[ -z $VOLUME_PATH ]]; then
             echo "Your docker version is too old, please update it"
             exit 1
