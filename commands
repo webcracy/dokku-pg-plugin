@@ -3,67 +3,67 @@ set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
 # Check if name is specified
 if [[ $1 == postgresql:* ]]; then
-    if [ -z $2 ] && [ $1 != postgresql:list ]; then
-        echo "You must specify an app name"
-        exit 1
+  if [[ -z $2 ]] && [[ " postgresql:list postgresql:help " == *" $1 "* ]]; then
+    echo "You must specify an app name"
+    exit 1
+  else
+    APP="$2"
+    # Check if app exists with the same name
+    if [[ -d "$DOKKU_ROOT/$APP" ]]; then
+      APP_EXISTS=true
     else
-        APP="$2"
-        # Check if app exists with the same name
-        if [[ -d "$DOKKU_ROOT/$APP" ]]; then
-            APP_EXISTS=true
-        else
-            APP_EXISTS=false
-        fi
+      APP_EXISTS=false
     fi
+  fi
 fi
 
 # Create .postgresql diretory if not exists
 if [[ ! -d $DOKKU_ROOT/.postgresql ]]; then
-    mkdir -p $DOKKU_ROOT/.postgresql
-    chown -R dokku: $DOKKU_ROOT/.postgresql
+  mkdir -p $DOKKU_ROOT/.postgresql
+  chown -R dokku: $DOKKU_ROOT/.postgresql
 fi
 
 function check_postgresql_container() {
-    if [[ ! -f "$DOKKU_ROOT/.postgresql/pwd_$APP" ]]; then
-        echo "Unknown (or too old) PostgreSQL container"
-        exit 1
-    fi
+  if [[ ! -f "$DOKKU_ROOT/.postgresql/pwd_$APP" ]]; then
+    echo "Unknown (or too old) PostgreSQL container"
+    exit 1
+  fi
 }
 
 function check_postgresql_tool() {
-    local tool_name="$1"
-    if [[ $(whereis $tool_name | awk '{ print NF }') -eq 1 ]]; then
-        echo "'${tool_name}' not found. Is the package 'postgresql-client' installed?" 1>&2
-        exit 1
-    fi
+  local tool_name="$1"
+  if [[ $(whereis $tool_name | awk '{ print NF }') -eq 1 ]]; then
+    echo "'${tool_name}' not found. Is the package 'postgresql-client' installed?" 1>&2
+    exit 1
+  fi
 }
 
 function get_postgresql_id() {
-    ID=$(docker ps | grep postgresql/"$APP" | awk {'print $1'})
-    echo $ID
+  ID=$(docker ps | grep postgresql/"$APP" | awk {'print $1'})
+  echo $ID
 }
 
 function get_postgresql_ip() {
-    ID=$(get_postgresql_id)
-    IP=$(docker inspect --format '{{ .NetworkSettings.Gateway }}' $ID)
-    echo $IP
+  ID=$(get_postgresql_id)
+  IP=$(docker inspect --format '{{ .NetworkSettings.Gateway }}' $ID)
+  echo $IP
 }
 
 function get_postgresql_port() {
-    ID=$(get_postgresql_id)
-    PORT=$(docker port "$ID" 5432 | sed 's/0.0.0.0://')
-    echo $PORT
+  ID=$(get_postgresql_id)
+  PORT=$(docker port "$ID" 5432 | sed 's/0.0.0.0://')
+  echo $PORT
 }
 
 
 function connect_to_db() {
-    local PGPASSWORD
-    PGPASSWORD=$(cat "$DOKKU_ROOT/.postgresql/pwd_$APP")
-    local PGPASSWORD=$PGPASSWORD
-    IP=$(get_postgresql_ip)
-    PORT=$(get_postgresql_port)
+  local PGPASSWORD
+  PGPASSWORD=$(cat "$DOKKU_ROOT/.postgresql/pwd_$APP")
+  local PGPASSWORD=$PGPASSWORD
+  IP=$(get_postgresql_ip)
+  PORT=$(get_postgresql_port)
 
-    psql -h $IP -p $PORT -U root db
+  psql -h $IP -p $PORT -U root db
 }
 
 case "$1" in
@@ -79,21 +79,21 @@ case "$1" in
     # Check if DB container is installed
     IMAGE=$(docker images | grep "kloadut/postgresql " |  awk '{print $3}')
     if [[ -z $IMAGE ]]; then
-        echo "PostgreSQL image not found... Did you run 'dokku plugins-install' ?"
-        exit 1
+      echo "PostgreSQL image not found... Did you run 'dokku plugins-install' ?"
+      exit 1
     fi
     # Check if an existing DB volume exists
     if [[ -f "$DOKKU_ROOT/.postgresql/volume_$APP" ]]; then
-        VOLUME="$(cat $DOKKU_ROOT/.postgresql/volume_$APP):/opt/postgresql"
-        echo
-        echo "-----> Reusing postgresql/$APP database"
+      VOLUME="$(cat $DOKKU_ROOT/.postgresql/volume_$APP):/opt/postgresql"
+      echo
+      echo "-----> Reusing postgresql/$APP database"
     else
-        VOLUME="/opt/postgresql"
-        # Generate a random password for DB user
-        DB_PASSWORD=$(< /dev/urandom tr -dc A-Za-z0-9 | head -c 16)
-        echo $DB_PASSWORD > "$DOKKU_ROOT/.postgresql/pwd_$APP"
-        chown dokku: "$DOKKU_ROOT/.postgresql/pwd_$APP"
-        chmod 700 "$DOKKU_ROOT/.postgresql/pwd_$APP"
+      VOLUME="/opt/postgresql"
+      # Generate a random password for DB user
+      DB_PASSWORD=$(< /dev/urandom tr -dc A-Za-z0-9 | head -c 16)
+      echo $DB_PASSWORD > "$DOKKU_ROOT/.postgresql/pwd_$APP"
+      chown dokku: "$DOKKU_ROOT/.postgresql/pwd_$APP"
+      chmod 700 "$DOKKU_ROOT/.postgresql/pwd_$APP"
     fi
     # Fork DB image
     ID=$(docker run -d kloadut/postgresql echo '')
@@ -105,12 +105,12 @@ case "$1" in
     sleep 4
     # Rename persistent volume
     if [[ ! -f "$DOKKU_ROOT/.postgresql/volume_$APP" ]]; then
-        VOLUME_PATH=$(docker inspect $ID | grep /var/lib/docker/volumes | awk '{print $2}' | sed -e's/"//g')
-        if [[ -z $VOLUME_PATH ]]; then
-            echo "Your docker version is too old, please update it"
-            exit 1
-        fi
-        echo $VOLUME_PATH > "$DOKKU_ROOT/.postgresql/volume_$APP"
+      VOLUME_PATH=$(docker inspect $ID | grep /var/lib/docker/volumes | awk '{print $2}' | sed -e's/"//g')
+      if [[ -z $VOLUME_PATH ]]; then
+        echo "Your docker version is too old, please update it"
+        exit 1
+      fi
+      echo $VOLUME_PATH > "$DOKKU_ROOT/.postgresql/volume_$APP"
     fi
     # Link to a potential existing app
     dokku postgresql:link $APP $APP
@@ -125,23 +125,23 @@ case "$1" in
     ID=$(get_postgresql_id)
     # Stop and remove the container
     if [[ ! -z $ID ]]; then
-        docker kill $ID > /dev/null
-        sleep 1
-        docker rm -v $ID > /dev/null
-        sleep 1
+      docker kill $ID > /dev/null
+      sleep 1
+      docker rm -v $ID > /dev/null
+      sleep 1
     fi
     # Remove image
     IMAGE=$(docker images | grep "$DB_IMAGE " |  awk '{print $1}')
     if [[ ! -z $IMAGE ]]; then
-        docker rmi $IMAGE > /dev/null
+      docker rmi $IMAGE > /dev/null
     fi
     # Remove container root password
     if [[ -f "$DOKKU_ROOT/.postgresql/pwd_$APP" ]]; then
-        rm -f "$DOKKU_ROOT/.postgresql/pwd_$APP"
+      rm -f "$DOKKU_ROOT/.postgresql/pwd_$APP"
     fi
     # Remove persistent volume
     if [[ -f "$DOKKU_ROOT/.postgresql/volume_$APP" ]]; then
-        rm -f "$DOKKU_ROOT/.postgresql/volume_$APP"
+      rm -f "$DOKKU_ROOT/.postgresql/volume_$APP"
     fi
 
     echo
@@ -182,28 +182,28 @@ case "$1" in
 
   postgresql:link)
     if $APP_EXISTS; then
-        # Check argument
-        if [[ -z $3 ]]; then
-            echo "You must specify a database name"
-            exit 1
-        fi
-        DB_IMAGE="postgresql/$3"
-        if [[ ! -f "$DOKKU_ROOT/.postgresql/pwd_$3" ]]; then
-            echo "Database is not initialized correctly. Did you run 'dokku plugins-install'?"
-            exit 1
-        fi
-        DB_PASSWORD=$(cat "$DOKKU_ROOT/.postgresql/pwd_$3")
-        # get_postgresql_port expects $APP to be the name of the db so we temporarily change
-        APP_CACHE=$APP
-        APP=$3
-        PORT=$(get_postgresql_port)
-        IP=$(get_postgresql_ip)
-        PORT=$(get_postgresql_port)
-        APP=$APP_CACHE
-        # Link database using dokku command
-        dokku config:set $APP "DATABASE_URL=postgres://root:$DB_PASSWORD@$IP:$PORT/db"
-        echo
-        echo "-----> $APP linked to $DB_IMAGE database"
+      # Check argument
+      if [[ -z $3 ]]; then
+        echo "You must specify a database name"
+        exit 1
+      fi
+      DB_IMAGE="postgresql/$3"
+      if [[ ! -f "$DOKKU_ROOT/.postgresql/pwd_$3" ]]; then
+        echo "Database is not initialized correctly. Did you run 'dokku plugins-install'?"
+        exit 1
+      fi
+      DB_PASSWORD=$(cat "$DOKKU_ROOT/.postgresql/pwd_$3")
+      # get_postgresql_port expects $APP to be the name of the db so we temporarily change
+      APP_CACHE=$APP
+      APP=$3
+      PORT=$(get_postgresql_port)
+      IP=$(get_postgresql_ip)
+      PORT=$(get_postgresql_port)
+      APP=$APP_CACHE
+      # Link database using dokku command
+      dokku config:set $APP "DATABASE_URL=postgres://root:$DB_PASSWORD@$IP:$PORT/db"
+      echo
+      echo "-----> $APP linked to $DB_IMAGE database"
     fi
     ;;
 
@@ -216,12 +216,12 @@ case "$1" in
     # shellcheck disable=SC2012
     CONTAINERS=$(ls $DOKKU_ROOT/.postgresql/volume* 2> /dev/null | sed -e 's/_/ /' | awk '{print $2}')
     if [[ -z $CONTAINERS ]]; then
-        echo "There are no PostgreSQL containers created."
+      echo "There are no PostgreSQL containers created."
     else
-        echo "PostgreSQL containers:"
-        for CONTAINER in $CONTAINERS; do
-            echo "  - $CONTAINER"
-        done
+      echo "PostgreSQL containers:"
+      for CONTAINER in $CONTAINERS; do
+        echo "  - $CONTAINER"
+      done
     fi
     ;;
 
@@ -234,7 +234,7 @@ case "$1" in
     echo "-----> $APP database restored"
     ;;
 
-  help)
+  help | postgresql:help)
     HELP=$(cat<<EOF
     postgresql:console <db>, Open a PostgreSQL console
     postgresql:create <db>, Create a PostgreSQL container
