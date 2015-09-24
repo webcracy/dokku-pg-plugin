@@ -57,7 +57,9 @@ function get_postgresql_port() {
 
 
 function connect_to_db() {
-    export PGPASSWORD=$(cat "$DOKKU_ROOT/.postgresql/pwd_$APP")
+    local PGPASSWORD
+    PGPASSWORD=$(cat "$DOKKU_ROOT/.postgresql/pwd_$APP")
+    local PGPASSWORD=$PGPASSWORD
     IP=$(get_postgresql_ip)
     PORT=$(get_postgresql_port)
 
@@ -82,7 +84,7 @@ case "$1" in
     fi
     # Check if an existing DB volume exists
     if [[ -f "$DOKKU_ROOT/.postgresql/volume_$APP" ]]; then
-        VOLUME="`cat $DOKKU_ROOT/.postgresql/volume_$APP`:/opt/postgresql"
+        VOLUME="$(cat $DOKKU_ROOT/.postgresql/volume_$APP):/opt/postgresql"
         echo
         echo "-----> Reusing postgresql/$APP database"
     else
@@ -149,7 +151,8 @@ case "$1" in
   postgresql:dump)
     check_postgresql_container
     check_postgresql_tool pg_dump
-    export PGPASSWORD=$(cat "$DOKKU_ROOT/.postgresql/pwd_$APP")
+    PGPASSWORD=$(cat "$DOKKU_ROOT/.postgresql/pwd_$APP")
+    export PGPASSWORD=$PGPASSWORD
     IP=$(get_postgresql_ip)
     PORT=$(get_postgresql_port)
 
@@ -210,6 +213,7 @@ case "$1" in
     ;;
 
   postgresql:list)
+    # shellcheck disable=SC2012
     CONTAINERS=$(ls $DOKKU_ROOT/.postgresql/volume* 2> /dev/null | sed -e 's/_/ /' | awk '{print $2}')
     if [[ -z $CONTAINERS ]]; then
         echo "There are no PostgreSQL containers created."
