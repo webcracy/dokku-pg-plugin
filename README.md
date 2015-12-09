@@ -14,11 +14,12 @@ Project: https://github.com/progrium/dokku
 ```shell
 # on 0.3.x
 cd /var/lib/dokku/plugins
-git clone https://github.com/Kloadut/dokku-pg-plugin.git postgresql
+git clone https://github.com/webcracy/dokku-pg-plugin.git postgresql
+
 dokku plugins-install
 
 # on 0.4.x
-dokku plugin:install https://github.com/Kloadut/dokku-pg-plugin.git postgresql
+dokku plugin:install https://github.com/webcracy/dokku-pg-plugin.git postgresql
 ```
 
 ## commands
