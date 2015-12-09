@@ -5,6 +5,7 @@ APP="$1"
 
 PG_APP_IMAGE="postgresql/$APP"
 PG_VOLUME_PATH="$DOKKU_ROOT/.postgresql/volume_$APP"
+DB_PASSWORD="$DOKKU_ROOT/.postgresql/pwd_$APP"
 
 # Check if an existing DB volume exists
 PG_APP_IMAGE_ID=$(docker images | grep "$PG_APP_IMAGE" |  awk '{print $3}')
